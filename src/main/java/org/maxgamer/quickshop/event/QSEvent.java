@@ -38,8 +38,9 @@ public abstract class QSEvent extends Event {
         return handlers;
     }
 
-    public void callEvent() {
+    public boolean callEvent() {
         QuickShop.getInstance().getServer().getPluginManager().callEvent(this);
+        return true;
     }
 
 }

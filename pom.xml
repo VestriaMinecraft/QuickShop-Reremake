@@ -542,8 +542,8 @@
             <scope>test</scope>
             <exclusions>
                 <exclusion>
-                    <artifactId>spigot-api</artifactId>
-                    <groupId>org.spigotmc</groupId>
+                    <artifactId>paper-api</artifactId>
+                    <groupId>com.destroystokyo.paper</groupId>
                 </exclusion>
                 <exclusion>
                     <artifactId>annotations</artifactId>
@@ -552,8 +552,8 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot-api</artifactId>
+            <groupId>com.destroystokyo.paper</groupId>
+            <artifactId>paper-api</artifactId>
             <version>1.16.5-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>

@@ -203,4 +203,14 @@ public class Trader implements OfflinePlayer {
     public void setOp(boolean value) {
         offlinePlayer.setOp(value);
     }
+
+    @Override
+    public long getLastSeen() {
+        return offlinePlayer.getLastSeen();
+    }
+
+    @Override
+    public long getLastLogin() {
+        return offlinePlayer.getLastLogin();
+    }
 }
