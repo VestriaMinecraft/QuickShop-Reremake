@@ -21,6 +21,8 @@ package org.maxgamer.quickshop.command.subcommand;
 
 import io.papermc.lib.PaperLib;
 import lombok.AllArgsConstructor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -134,14 +136,21 @@ public class SubCommand_Find implements CommandProcesser {
                     PlayerTeleportEvent.TeleportCause.UNKNOWN);
             MsgUtil.sendMessage(p, MsgUtil.getMessage("nearby-shop-this-way", sender, closest.getValue().intValue()));
         } else {
-            StringBuilder stringBuilder = new StringBuilder(MsgUtil.getMessage("nearby-shop-header", sender, lookFor)).append("\n");
+            List<Component> components = new ArrayList<>();
+            components.add(Component.text(MsgUtil.getMessage("nearby-shop-header", sender, lookFor)));
+
             for (Map.Entry<Shop, Double> shopDoubleEntry : sortedShops) {
                 Shop shop = shopDoubleEntry.getKey();
                 Location location = shop.getLocation();
                 //  "nearby-shop-entry": "&a- Info:{0} &aPrice:&b{1} &ax:&b{2} &ay:&b{3} &az:&b{4} &adistance: &b{5} &ablock(s)"
-                stringBuilder.append(MsgUtil.getMessage("nearby-shop-entry", sender, shop.getSignText()[1], shop.getSignText()[3], location.getBlockX(), location.getBlockY(), location.getBlockZ(), shopDoubleEntry.getValue().intValue())).append("\n");
+                components.add(Component.text(MsgUtil.getMessage("nearby-shop-entry", sender, shop.getSignText()[1], shop.getSignText()[3], location.getBlockX(), location.getBlockY(), location.getBlockZ(), shopDoubleEntry.getValue().intValue())));
+                components.add(Component.text("[TELEPORT HERE]").clickEvent(ClickEvent.runCommand(makeTeleport(location))));
             }
-            MsgUtil.sendMessage(sender, stringBuilder.toString());
+            sender.sendMessage(Component.join(Component.newline(), components));
         }
+    }
+
+    private String makeTeleport(Location location) {
+        return "teleport " + location.getBlockX() + " " + location.getBlockY() + " " + location.getBlockZ();
     }
 }
