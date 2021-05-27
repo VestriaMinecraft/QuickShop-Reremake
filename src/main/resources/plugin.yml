@@ -37,6 +37,9 @@ commands:
     description: QuickShop command
     usage: /qs
     aliases: [shop,qsshop,qshop,quickshop,chestshop,cshop]
+  quickshopcallback:
+    description: whomegalul
+    usage: /quickshopcallback
 
 permissions:
   quickshop.create.sell:

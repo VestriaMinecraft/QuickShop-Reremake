@@ -19,6 +19,8 @@
 
 package org.maxgamer.quickshop.command.subcommand;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import io.papermc.lib.PaperLib;
 import lombok.AllArgsConstructor;
 import net.kyori.adventure.text.Component;
@@ -36,10 +38,15 @@ import org.maxgamer.quickshop.util.MsgUtil;
 import org.maxgamer.quickshop.util.Util;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
 public class SubCommand_Find implements CommandProcesser {
+
+    public static final Cache<UUID, Location> LOCATION_CACHE = CacheBuilder.newBuilder()
+            .expireAfterWrite(1, TimeUnit.MINUTES)
+            .build();
 
     private final QuickShop plugin;
 
@@ -142,15 +149,16 @@ public class SubCommand_Find implements CommandProcesser {
             for (Map.Entry<Shop, Double> shopDoubleEntry : sortedShops) {
                 Shop shop = shopDoubleEntry.getKey();
                 Location location = shop.getLocation();
+                LOCATION_CACHE.put(shop.getRuntimeRandomUniqueId(), location);
                 //  "nearby-shop-entry": "&a- Info:{0} &aPrice:&b{1} &ax:&b{2} &ay:&b{3} &az:&b{4} &adistance: &b{5} &ablock(s)"
                 components.add(Component.text(MsgUtil.getMessage("nearby-shop-entry", sender, shop.getSignText()[1], shop.getSignText()[3], location.getBlockX(), location.getBlockY(), location.getBlockZ(), shopDoubleEntry.getValue().intValue())));
-                components.add(Component.text("[TELEPORT HERE]").clickEvent(ClickEvent.runCommand(makeTeleport(location))));
+                components.add(Component.text("[TELEPORT HERE]").clickEvent(ClickEvent.runCommand(makeTeleport(shop.getRuntimeRandomUniqueId()))));
             }
             sender.sendMessage(Component.join(Component.newline(), components));
         }
     }
 
-    private String makeTeleport(Location location) {
-        return "teleport " + location.getBlockX() + " " + location.getBlockY() + " " + location.getBlockZ();
+    private String makeTeleport(UUID uuid) {
+        return "/quickshopcallback " + uuid.toString();
     }
 }

@@ -27,6 +27,7 @@ import me.minebuilders.clearlag.listeners.ItemMergeListener;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -46,6 +47,7 @@ import org.maxgamer.quickshop.chat.QuickChat;
 import org.maxgamer.quickshop.chat.QuickChatType;
 import org.maxgamer.quickshop.chat.platform.minedown.BungeeQuickChat;
 import org.maxgamer.quickshop.command.CommandManager;
+import org.maxgamer.quickshop.command.subcommand.SubCommand_Find;
 import org.maxgamer.quickshop.database.*;
 import org.maxgamer.quickshop.economy.*;
 import org.maxgamer.quickshop.event.QSReloadEvent;
@@ -841,6 +843,20 @@ public class QuickShop extends JavaPlugin {
         calendarWatcher.start();
         Util.debugLog("Now using display-type: " + DisplayItem.getNowUsing().name());
         // sentryErrorReporter.sendError(new IllegalAccessError("no fucking way"));
+
+        this.getCommand("quickshopcallback").setExecutor((sender, command, label, args) -> {
+            UUID uuid = UUID.fromString(args[0]);
+
+            Player player = (Player) sender;
+            Location location = SubCommand_Find.LOCATION_CACHE.getIfPresent(uuid);
+
+            if (location == null) {
+                return true;
+            }
+
+            player.teleportAsync(location);
+            return true;
+        });
     }
 
     private void loadItemMatcher() {
