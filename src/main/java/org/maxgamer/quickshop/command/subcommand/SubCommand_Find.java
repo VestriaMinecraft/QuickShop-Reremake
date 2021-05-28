@@ -151,8 +151,20 @@ public class SubCommand_Find implements CommandProcesser {
                 Location location = shop.getLocation();
                 LOCATION_CACHE.put(shop.getRuntimeRandomUniqueId(), location);
                 //  "nearby-shop-entry": "&a- Info:{0} &aPrice:&b{1} &ax:&b{2} &ay:&b{3} &az:&b{4} &adistance: &b{5} &ablock(s)"
-                components.add(Component.text(MsgUtil.getMessage("nearby-shop-entry", sender, shop.getSignText()[1], shop.getSignText()[3], location.getBlockX(), location.getBlockY(), location.getBlockZ(), shopDoubleEntry.getValue().intValue())));
-                components.add(Component.text("[TELEPORT HERE]").clickEvent(ClickEvent.runCommand(makeTeleport(shop.getRuntimeRandomUniqueId()))));
+
+                Component component = Component.text(
+                        MsgUtil.getMessage(
+                                "nearby-shop-entry",
+                                sender,
+                                shop.getSignText()[1],
+                                shop.getSignText()[3],
+                                location.getBlockX(),
+                                location.getBlockY(),
+                                location.getBlockZ(),
+                                shopDoubleEntry.getValue().intValue()
+                        )
+                ).append(Component.text(" [TELEPORT HERE]").clickEvent(ClickEvent.runCommand(makeTeleport(shop.getRuntimeRandomUniqueId()))));
+                components.add(component);
             }
             sender.sendMessage(Component.join(Component.newline(), components));
         }
