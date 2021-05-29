@@ -19,6 +19,7 @@
 
 package org.maxgamer.quickshop;
 
+import com.earth2me.essentials.Essentials;
 import com.google.common.collect.Lists;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,6 +36,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.entity.ItemSpawnEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredListener;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -76,6 +78,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -844,6 +847,9 @@ public class QuickShop extends JavaPlugin {
         Util.debugLog("Now using display-type: " + DisplayItem.getNowUsing().name());
         // sentryErrorReporter.sendError(new IllegalAccessError("no fucking way"));
 
+        final Essentials essentials = (Essentials) this.getServer().getPluginManager().getPlugin("Essentials");
+        assert essentials != null;
+
         this.getCommand("quickshopcallback").setExecutor((sender, command, label, args) -> {
             UUID uuid = UUID.fromString(args[0]);
 
@@ -854,7 +860,12 @@ public class QuickShop extends JavaPlugin {
                 return true;
             }
 
-            player.teleportAsync(location);
+            essentials.getUser(player).getAsyncTeleport().now(
+                    location,
+                    false,
+                    PlayerTeleportEvent.TeleportCause.COMMAND,
+                    new CompletableFuture<>()
+            );
             return true;
         });
     }

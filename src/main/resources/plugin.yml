@@ -29,6 +29,7 @@ softdepend:
   - GriefPrevention
   - JulySafe
   - FabledSkyblock
+  - Essentials
 
 api-version: 1.13
 
