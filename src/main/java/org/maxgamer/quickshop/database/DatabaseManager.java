@@ -78,7 +78,11 @@ public class DatabaseManager {
 
         if (useQueue) {
             try {
-                task = plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin, () -> plugin.getDatabaseManager().runTask(), 1, plugin.getConfig().getLong("database.queue-commit-interval") * 20);
+                task = plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin, () -> {
+                    if (!task.isCancelled()) {
+                        plugin.getDatabaseManager().runTask();
+                    }
+                }, 1, plugin.getConfig().getLong("database.queue-commit-interval") * 20);
             } catch (IllegalPluginAccessException e) {
                 Util.debugLog("Plugin is disabled but trying create database task, move to Main Thread...");
                 plugin.getDatabaseManager().runTask();
@@ -124,9 +128,7 @@ public class DatabaseManager {
         DatabaseConnection connection = database.getConnection();
         String query = "SELECT * FROM " + table + " LIMIT 1";
         boolean match = false;
-        try {
-            PreparedStatement ps = connection.get().prepareStatement(query);
-            ResultSet rs = ps.executeQuery();
+        try (PreparedStatement ps = connection.get().prepareStatement(query); ResultSet rs = ps.executeQuery()) {
             ResultSetMetaData metaData = rs.getMetaData();
             for (int i = 1; i <= metaData.getColumnCount(); i++) {
                 if (metaData.getColumnLabel(i).equals(column)) {
@@ -134,9 +136,6 @@ public class DatabaseManager {
                     break;
                 }
             }
-            rs.close();
-            ps.close();
-
         } catch (SQLException e) {
             return match;
         } finally {
@@ -149,13 +148,12 @@ public class DatabaseManager {
      * Internal method, runTasks in queue.
      */
     private synchronized void runTask() { // synchronized for QUICKSHOP-WX
-        synchronized (sqlQueue) {
             if (sqlQueue.isEmpty()) {
                 return;
             }
             DatabaseConnection dbconnection = this.database.getConnection();
-            Connection connection = dbconnection.get();
-            try {
+
+            try (Connection connection = dbconnection.get()) {
                 //start our commit
                 connection.setAutoCommit(false);
                 Timer ctimer = new Timer(true);
@@ -170,10 +168,9 @@ public class DatabaseManager {
                     if (task == null) {
                         break;
                     }
-                    // Util.debugLog("Executing the SQL task: " + task);
 
                     task.run(connection);
-                    long tookTime = timer.endTimer();
+                    long tookTime = timer.stopAndGetTimePassed();
                     if (tookTime > 300) {
                         warningSender.sendWarn(
                                 "Database performance warning: It took too long time ("
@@ -185,7 +182,7 @@ public class DatabaseManager {
                     connection.commit();
                     connection.setAutoCommit(true);
                 }
-                long tookTime = ctimer.endTimer();
+                long tookTime = ctimer.stopAndGetTimePassed();
                 if (tookTime > 5500) {
                     warningSender.sendWarn(
                             "Database performance warning: It took too long time ("
@@ -201,7 +198,6 @@ public class DatabaseManager {
             } finally {
                 dbconnection.release();
             }
-        }
 
 //        try {
 //            this.database.getConnection().commit();
@@ -231,9 +227,7 @@ public class DatabaseManager {
      */
     public void addDelayTask(DatabaseTask task) {
         if (useQueue) {
-            synchronized (sqlQueue) {
-                sqlQueue.offer(task);
-            }
+            sqlQueue.offer(task);
         } else {
             runInstantTask(task);
         }

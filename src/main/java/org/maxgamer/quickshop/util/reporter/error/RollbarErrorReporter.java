@@ -38,11 +38,9 @@ import org.maxgamer.quickshop.util.paste.Paste;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Filter;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
-import java.util.logging.Logger;
 
 public class RollbarErrorReporter {
     //private volatile static String bootPaste = null;
@@ -55,11 +53,15 @@ public class RollbarErrorReporter {
             , UnsupportedClassVersionError.class
             , LinkageError.class);
     private final QuickShop plugin;
-    @Getter
-    private final boolean enabled;
+    private final QuickShopExceptionFilter quickShopExceptionFilter;
+    private final GlobalExceptionFilter serverExceptionFilter;
     private boolean disable;
     private boolean tempDisable;
     private String lastPaste = null;
+    //private final GlobalExceptionFilter globalExceptionFilter;
+    @Getter
+    private volatile boolean enabled;
+
 
     public RollbarErrorReporter(@NotNull QuickShop plugin) {
         this.plugin = plugin;
@@ -70,27 +72,25 @@ public class RollbarErrorReporter {
                 .handleUncaughtErrors(false)
                 .build();
         this.rollbar = Rollbar.init(config);
-        plugin.getLogger().setFilter(new QuickShopExceptionFilter()); // Redirect log request passthrough our error catcher.
-        plugin.getServer().getLogger().setFilter(new GlobalExceptionFilter());
-        plugin.getServer().getLogger().setFilter(new GlobalExceptionFilter());
-        Logger.getGlobal().setFilter(new GlobalExceptionFilter());
+
+        quickShopExceptionFilter = new QuickShopExceptionFilter(plugin.getLogger().getFilter());
+        plugin.getLogger().setFilter(quickShopExceptionFilter); // Redirect log request passthrough our error catcher.
+
+        serverExceptionFilter = new GlobalExceptionFilter(plugin.getLogger().getFilter());
+        plugin.getServer().getLogger().setFilter(serverExceptionFilter);
+
+        //globalExceptionFilter = new GlobalExceptionFilter(Logger.getGlobal().getFilter());
+        // Logger.getGlobal().setFilter(globalExceptionFilter);
+
         Util.debugLog("Rollbar error reporter success loaded.");
-//        if (bootPaste == null) {
-//            new BukkitRunnable() {
-//                @Override
-//                public void run() {
-//                    Paste paste = new Paste(plugin);
-//                    lastPaste = paste.paste(paste.genNewPaste());
-//                    if (lastPaste != null) {
-//                        bootPaste = lastPaste;
-//                        plugin.log("Plugin booted up, the server paste was created for debugging, reporting errors and data-recovery: " + lastPaste);
-//                    }
-//                }
-//            }.runTaskAsynchronously(plugin);
-//        } else {
-//            plugin.log("Reload detected, the server paste will not created again, previous paste link: " + bootPaste);
-//        }
         enabled = true;
+    }
+
+    public void unregister() {
+        enabled = false;
+        plugin.getLogger().setFilter(quickShopExceptionFilter.preFilter);
+        plugin.getServer().getLogger().setFilter(serverExceptionFilter.preFilter);
+        //Logger.getGlobal().setFilter(globalExceptionFilter.preFilter);
     }
 
     private Map<String, Object> makeMapping() {
@@ -105,70 +105,71 @@ public class RollbarErrorReporter {
         dataMapping.put("server_players", plugin.getServer().getOnlinePlayers().size() + "/" + plugin.getServer().getMaxPlayers());
         dataMapping.put("server_onlinemode", String.valueOf(plugin.getServer().getOnlineMode()));
         dataMapping.put("server_bukkitversion", plugin.getServer().getVersion());
-
-//        dataMapping.put("server_plugins", getPluginInfo());
         dataMapping.put("user", QuickShop.getInstance().getServerUniqueID().toString());
         return dataMapping;
     }
 
-    private UUID sendError0(@NotNull Throwable throwable, @NotNull String... context) {
+    private void sendError0(@NotNull Throwable throwable, @NotNull String... context) {
         try {
             if (plugin.getBootError() != null) {
-                return null; // Don't report any errors if boot failed.
+                return; // Don't report any errors if boot failed.
             }
             if (tempDisable) {
                 this.tempDisable = false;
-                return null;
+                return;
             }
             if (disable) {
-                return null;
+                return;
             }
             if (!enabled) {
-                return null;
-            }
-
-            if (!checkWasCauseByQS(throwable)) {
-                return null;
+                return;
             }
 
             if (!canReport(throwable)) {
-                return null;
+                return;
             }
             if (ignoredException.contains(throwable.getClass())) {
-                return null;
+                return;
+            }
+            if (throwable.getCause() != null) {
+                if (ignoredException.contains(throwable.getCause())) {
+                    return;
+                }
             }
             if (lastPaste == null) {
                 String pasteURL;
                 try {
                     Paste paste = new Paste(plugin);
-                    pasteURL = paste.paste(paste.genNewPaste());
+                    pasteURL = paste.paste(paste.genNewPaste(), Paste.PasteType.UBUNTU);
                     if (pasteURL != null && !pasteURL.isEmpty()) {
                         lastPaste = pasteURL;
+                    } else {
+                        lastPaste = paste.paste(paste.genNewPaste());
                     }
-                } catch (Exception ex) {
-                    // Ignore
-                    pasteURL = this.lastPaste;
+                } catch (Exception ignored) {
                 }
             }
             this.rollbar.error(throwable, this.makeMapping(), throwable.getMessage());
             plugin
                     .getLogger()
                     .warning(
-                            "A exception was thrown, QuickShop already caught this exception and reported it, switch to debug mode to see the full errors.");
+                            "A exception was thrown, QuickShop already caught this exception and reported it. This error will only shown once before next restart.");
             plugin.getLogger().warning("====QuickShop Error Report BEGIN===");
             plugin.getLogger().warning("Description: " + throwable.getMessage());
             plugin.getLogger().warning("Server   ID: " + plugin.getServerUniqueID());
+            plugin.getLogger().warning("Exception  : ");
+            ignoreThrows();
+            throwable.printStackTrace();
+            resetIgnores();
             plugin.getLogger().warning("====QuickShop Error Report E N D===");
             Util.debugLog(throwable.getMessage());
             Arrays.stream(throwable.getStackTrace()).forEach(a -> Util.debugLog(a.getClassName() + "." + a.getMethodName() + ":" + a.getLineNumber()));
             if (Util.isDevMode()) {
                 throwable.printStackTrace();
             }
-            return null;
         } catch (Exception th) {
             ignoreThrow();
             plugin.getLogger().log(Level.WARNING, "Something going wrong when automatic report errors, please submit this error on Issue Tracker", th);
-            return null;
         }
     }
 
@@ -177,16 +178,13 @@ public class RollbarErrorReporter {
      *
      * @param throwable Throws
      * @param context   BreadCrumb
-     * @return Event Uniqud ID
      */
-    public @Nullable UUID sendError(@NotNull Throwable throwable, @NotNull String... context) {
-        AtomicReference<UUID> uuid = new AtomicReference<>();
+    public void sendError(@NotNull Throwable throwable, @NotNull String... context) {
         if (Bukkit.isPrimaryThread()) {
-            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> uuid.set(sendError0(throwable, context)));
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> sendError0(throwable, context));
             //ignore async response
-            return null;
         } else {
-            return sendError0(throwable, context);
+            sendError0(throwable, context);
         }
     }
 
@@ -210,7 +208,9 @@ public class RollbarErrorReporter {
             // version.
             return false;
         }
-        if (!checkWasCauseByQS(throwable)) {
+
+        PossiblyLevel possiblyLevel = checkWasCauseByQS(throwable);
+        if (possiblyLevel != PossiblyLevel.CONFIRM) {
             return false;
         }
         if (throwable.getMessage().startsWith("#")) {
@@ -221,6 +221,12 @@ public class RollbarErrorReporter {
             stackTraceElement = throwable.getStackTrace()[1];
         } else {
             stackTraceElement = throwable.getStackTrace()[2];
+        }
+        if (stackTraceElement.getClassName().contains("org.maxgamer.quickshop.util.reporter.error")) {
+            ignoreThrows();
+            plugin.getLogger().log(Level.WARNING, "Uncaught exception in ErrorRollbar", throwable);
+            resetIgnores();
+            return false;
         }
         String text =
                 stackTraceElement.getClassName()
@@ -242,32 +248,45 @@ public class RollbarErrorReporter {
      * @param throwable Throws
      * @return Cause or not
      */
-    public boolean checkWasCauseByQS(@Nullable Throwable throwable) {
+    public PossiblyLevel checkWasCauseByQS(@Nullable Throwable throwable) {
         if (throwable == null) {
-            return false;
+            return PossiblyLevel.IMPOSSIBLE;
         }
         if (throwable.getMessage() == null) {
-            return false;
+            return PossiblyLevel.IMPOSSIBLE;
         }
         if (throwable.getMessage().contains("Could not pass event")) {
-            return throwable.getMessage().contains("QuickShop");
+            if (throwable.getMessage().contains("QuickShop")) {
+                return PossiblyLevel.CONFIRM;
+            } else {
+                return PossiblyLevel.IMPOSSIBLE;
+            }
         }
         while (throwable.getCause() != null) {
             throwable = throwable.getCause();
         }
-        long element =
-                Arrays.stream(throwable.getStackTrace())
-                        .limit(5)
-                        .filter(
-                                stackTraceElement ->
-                                        stackTraceElement.getClassName().contains("org.maxgamer.quickshop"))
-                        .count();
-        if (element > 0) {
-            return true;
+
+        StackTraceElement[] stackTraceElements = throwable.getStackTrace();
+
+        if (stackTraceElements.length == 0) {
+            return PossiblyLevel.IMPOSSIBLE;
+        }
+
+        if (stackTraceElements[0].getClassName().contains("org.maxgamer.quickshop")) {
+            return PossiblyLevel.CONFIRM;
+        }
+
+        long errorCount = Arrays.stream(stackTraceElements)
+                .limit(3)
+                .filter(stackTraceElement -> stackTraceElement.getClassName().contains("org.maxgamer.quickshop"))
+                .count();
+
+        if (errorCount > 0) {
+            return PossiblyLevel.MAYBE;
         } else if (throwable.getCause() != null) {
             return checkWasCauseByQS(throwable.getCause());
         }
-        return false;
+        return PossiblyLevel.IMPOSSIBLE;
     }
 
     /**
@@ -305,7 +324,25 @@ public class RollbarErrorReporter {
         return buffer.toString();
     }
 
+    enum PossiblyLevel {
+        CONFIRM,
+        MAYBE,
+        IMPOSSIBLE
+    }
+
     class GlobalExceptionFilter implements Filter {
+
+        @Nullable
+        @Getter
+        private final Filter preFilter;
+
+        GlobalExceptionFilter(@Nullable Filter preFilter) {
+            this.preFilter = preFilter;
+        }
+
+        private boolean defaultValue(LogRecord record) {
+            return preFilter == null || preFilter.isLoggable(record);
+        }
 
         /**
          * Check if a given log record should be published.
@@ -316,26 +353,46 @@ public class RollbarErrorReporter {
         @Override
         public boolean isLoggable(@NotNull LogRecord record) {
             if (!enabled) {
-                return true;
+                return defaultValue(record);
             }
             Level level = record.getLevel();
             if (level != Level.WARNING && level != Level.SEVERE) {
-                return true;
+                return defaultValue(record);
             }
             if (record.getThrown() == null) {
-                return true;
+                return defaultValue(record);
             }
             if (Util.isDevMode()) {
                 sendError(record.getThrown(), record.getMessage());
-                return true;
+                return defaultValue(record);
             } else {
-                return sendError(record.getThrown(), record.getMessage()) == null;
+                sendError(record.getThrown(), record.getMessage());
+                PossiblyLevel possiblyLevel = checkWasCauseByQS(record.getThrown());
+                if (possiblyLevel == PossiblyLevel.IMPOSSIBLE) {
+                    return true;
+                }
+                if (possiblyLevel == PossiblyLevel.MAYBE) {
+                    plugin.getLogger().warning("This seems not a QuickShop. If you have any question, you should ask QuickShop developer.");
+                    return true;
+                }
+                return false;
             }
         }
 
     }
 
     class QuickShopExceptionFilter implements Filter {
+        @Nullable
+        @Getter
+        private final Filter preFilter;
+
+        QuickShopExceptionFilter(@Nullable Filter preFilter) {
+            this.preFilter = preFilter;
+        }
+
+        private boolean defaultValue(LogRecord record) {
+            return preFilter == null || preFilter.isLoggable(record);
+        }
 
         /**
          * Check if a given log record should be published.
@@ -346,20 +403,29 @@ public class RollbarErrorReporter {
         @Override
         public boolean isLoggable(@NotNull LogRecord record) {
             if (!enabled) {
-                return true;
+                return defaultValue(record);
             }
             Level level = record.getLevel();
             if (level != Level.WARNING && level != Level.SEVERE) {
-                return true;
+                return defaultValue(record);
             }
             if (record.getThrown() == null) {
-                return true;
+                return defaultValue(record);
             }
             if (Util.isDevMode()) {
                 sendError(record.getThrown(), record.getMessage());
-                return true;
+                return defaultValue(record);
             } else {
-                return sendError(record.getThrown(), record.getMessage()) == null;
+                sendError(record.getThrown(), record.getMessage());
+                PossiblyLevel possiblyLevel = checkWasCauseByQS(record.getThrown());
+                if (possiblyLevel == PossiblyLevel.IMPOSSIBLE) {
+                    return true;
+                }
+                if (possiblyLevel == PossiblyLevel.MAYBE) {
+                    plugin.getLogger().warning("This seems not a QuickShop error. If you have any question, you may can ask QuickShop developer but don't except any solution.");
+                    return true;
+                }
+                return false;
             }
         }
 

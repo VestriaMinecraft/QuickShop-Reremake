@@ -25,11 +25,14 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.jetbrains.annotations.NotNull;
 import org.maxgamer.quickshop.QuickShop;
 import org.maxgamer.quickshop.event.*;
 import org.maxgamer.quickshop.shop.ShopType;
 import org.maxgamer.quickshop.util.MsgUtil;
 import org.maxgamer.quickshop.util.Util;
+
+import java.util.Objects;
 
 
 public class InternalListener implements Listener {
@@ -44,8 +47,8 @@ public class InternalListener implements Listener {
     }
 
 
-    public boolean isForbidden(Material shopMaterial, Material itemMaterial) {
-        if (shopMaterial != itemMaterial) {
+    public boolean isForbidden(@NotNull Material shopMaterial, @NotNull Material itemMaterial) {
+        if (!Objects.equals(shopMaterial, itemMaterial)) {
             return false;
         }
         return shopMaterial.isBlock() && shopMaterial.name().toUpperCase().endsWith("SHULKER_BOX");
@@ -55,7 +58,7 @@ public class InternalListener implements Listener {
     public void shopCreate(ShopCreateEvent event) {
         if (isForbidden(event.getShop().getLocation().getBlock().getType(), event.getShop().getItem().getType())) {
             event.setCancelled(true);
-            MsgUtil.sendMessage(event.getCreator(), MsgUtil.getMessage("forbidden-vanilla-behavior", null));
+            MsgUtil.sendMessage(event.getCreator(), "forbidden-vanilla-behavior");
             return;
         }
         if (loggingAction) {
@@ -103,7 +106,7 @@ public class InternalListener implements Listener {
     public void shopPrePurchase(ShopPurchaseEvent event) {
         if (isForbidden(event.getShop().getLocation().getBlock().getType(), event.getShop().getItem().getType())) {
             event.setCancelled(true);
-            MsgUtil.sendMessage(event.getPurchaser(), MsgUtil.getMessage("forbidden-vanilla-behavior", null));
+            MsgUtil.sendMessage(event.getPurchaser(), "forbidden-vanilla-behavior");
             return;
         }
         if (loggingBalance) {
@@ -158,6 +161,12 @@ public class InternalListener implements Listener {
         if (loggingBalance) {
             plugin.log("Player " + (creator != null ? creator.getName() : event.getPurchaser()) + " had " + plugin.getEconomy().getBalance(event.getPurchaser(), event.getShop().getLocation().getWorld(), event.getShop().getCurrency()) + " after trading.");
             plugin.log("Shop Owner " + event.getShop().ownerName() + " had " + plugin.getEconomy().getBalance(event.getShop().getOwner(), event.getShop().getLocation().getWorld(), event.getShop().getCurrency()) + " after trading.");
+        }
+        if (event.getPurchaser().equals(event.getShop().getOwner())) {
+            Player player = Bukkit.getPlayer(event.getPurchaser());
+            if (player != null) {
+                MsgUtil.sendMessage(player, "shop-owner-self-trade");
+            }
         }
     }
 

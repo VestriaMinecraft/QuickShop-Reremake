@@ -23,21 +23,25 @@ import lombok.AllArgsConstructor;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 import org.maxgamer.quickshop.QuickShop;
-import org.maxgamer.quickshop.command.CommandProcesser;
+import org.maxgamer.quickshop.command.CommandHandler;
 import org.maxgamer.quickshop.util.MsgUtil;
 
+import java.util.logging.Level;
+
 @AllArgsConstructor
-public class SubCommand_Reload implements CommandProcesser {
+public class SubCommand_Reload implements CommandHandler<CommandSender> {
 
     private final QuickShop plugin;
 
     @Override
-    public void onCommand(
-            @NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] cmdArg) {
-        MsgUtil.sendMessage(sender, MsgUtil.getMessage("command.reloading", sender));
-        plugin.getServer().getPluginManager().disablePlugin(plugin);
-        plugin.getServer().getPluginManager().enablePlugin(plugin);
+    public void onCommand(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] cmdArg) {
+        MsgUtil.sendMessage(sender, "server-crash-warning");
+        MsgUtil.sendMessage(sender, "command.reloading");
+        try {
+            plugin.reload();
+        } catch (Exception e) {
+            MsgUtil.sendDirectMessage(sender, "A error occurred when reloading, please check console: " + e.getMessage());
+            plugin.getLogger().log(Level.SEVERE, "A error occurred when reloading", e);
+        }
     }
-
-
 }

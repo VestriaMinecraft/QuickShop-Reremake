@@ -42,7 +42,6 @@ import org.maxgamer.quickshop.shop.DisplayType;
 import org.maxgamer.quickshop.util.MsgUtil;
 import org.maxgamer.quickshop.util.Util;
 
-@SuppressWarnings("DuplicatedCode")
 public class DisplayProtectionListener extends ProtectionListenerBase {
 
 
@@ -140,9 +139,7 @@ public class DisplayProtectionListener extends ProtectionListenerBase {
         if (!DisplayItem.checkIsGuardItemStack(is)) {
             return;
         }
-        // item.remove();
         event.getHook().remove();
-        // event.getCaught().remove();
         event.setCancelled(true);
         sendAlert(
                 "[DisplayGuard] Player "

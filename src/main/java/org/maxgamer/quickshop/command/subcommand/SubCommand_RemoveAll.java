@@ -26,7 +26,7 @@ import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.maxgamer.quickshop.QuickShop;
-import org.maxgamer.quickshop.command.CommandProcesser;
+import org.maxgamer.quickshop.command.CommandHandler;
 import org.maxgamer.quickshop.shop.Shop;
 import org.maxgamer.quickshop.util.MsgUtil;
 
@@ -37,7 +37,7 @@ import java.util.List;
 import static org.maxgamer.quickshop.util.Util.getPlayerList;
 
 @AllArgsConstructor
-public class SubCommand_RemoveAll implements CommandProcesser {
+public class SubCommand_RemoveAll implements CommandHandler<CommandSender> {
 
     private final QuickShop plugin;
 
@@ -54,43 +54,43 @@ public class SubCommand_RemoveAll implements CommandProcesser {
                 }
             }
             if (shopOwner == null) {
-                MsgUtil.sendMessage(sender, MsgUtil.getMessage("unknown-player", null));
+                MsgUtil.sendMessage(sender, "unknown-player");
                 return;
             }
 
             int i = 0;
             if (!shopOwner.equals(sender)) { //Non-self shop
                 if (!sender.hasPermission("quickshop.removeall.other")) {
-                    MsgUtil.sendMessage(sender, MsgUtil.getMessage("no-permission", sender));
+                    MsgUtil.sendMessage(sender, "no-permission");
                     return;
                 }
                 for (Shop shop : tempList) {
                     if (shop.getOwner().equals(shopOwner.getUniqueId())) {
-                        plugin.log("Deleting shop " + shop + " request by /qs removeall command.");
+                        plugin.log("Deleting shop " + shop + " as requested by the /qs removeall command.");
                         shop.delete();
                         i++;
                     }
                 }
             } else { //Self shop
                 if (!sender.hasPermission("quickshop.removeall.self")) {
-                    MsgUtil.sendMessage(sender, MsgUtil.getMessage("no-permission", sender));
+                    MsgUtil.sendMessage(sender, "no-permission");
                     return;
                 }
                 if (!(sender instanceof OfflinePlayer)) {
-                    sender.sendMessage(ChatColor.RED + "This command only can execute by player");
+                    sender.sendMessage(ChatColor.RED + "This command can't be run by the console!");
                     return;
                 }
                 for (Shop shop : tempList) {
                     if (shop.getOwner().equals(((OfflinePlayer) sender).getUniqueId())) {
-                        plugin.log("Deleting shop " + shop + " request by /qs removeall command.");
+                        plugin.log("Deleting shop " + shop + " as requested by the /qs removeall command.");
                         shop.delete();
                         i++;
                     }
                 }
             }
-            MsgUtil.sendMessage(sender, MsgUtil.getMessage("command.some-shops-removed", sender, Integer.toString(i)));
+            MsgUtil.sendMessage(sender, "command.some-shops-removed", Integer.toString(i));
         } else {
-            MsgUtil.sendMessage(sender, MsgUtil.getMessage("command.no-owner-given", sender));
+            MsgUtil.sendMessage(sender, "command.no-owner-given");
         }
     }
 

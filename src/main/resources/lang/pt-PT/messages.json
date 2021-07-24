@@ -1,13 +1,14 @@
 {
+  "_comment": "Hi translator! If you editing this from Github or from code sources, you should go https://crowdin.com/project/quickshop-reremake",
   "file-test": "This is a test textfile. We use it to test if the messages.json is broken. You can fill it with any easter eggs you like here :)",
-  "translation-author": "Translator: Ghost_chu, Andre_601",
+  "translation-author": "Tradutor: Ghost_chu, Andre_601",
   "translation-version": "Support Version: Reremake",
   "translation-contributors": "Contributors: Timtower, Netherfoam, KaiNoMood, Mgazul, JackTheChicken and Andre_601",
   "translation-country": "Language Zone: English (en_US)",
-  "language-version": "52",
+  "language-version": "59",
   "not-looking-at-shop": "&cCould not find a QuickShop. You need to look at one.",
-  "no-anythings-in-your-hand": "&cThere is nothing in your hand.",
-  "no-permission": "&cYou do not have permission to do that.",
+  "no-anythings-in-your-hand": "&Não tens nada na mão.",
+  "no-permission": "&cNão tens permissão para fazer isso.",
   "integrations-check-failed-create": "&cIntegration {0} denied the shop-creation",
   "integrations-check-failed-trade": "&cIntegration {0} denied the Shop trading",
   "3rd-plugin-build-check-failed": "&c3rd party plugin &l{0}&r&c denied the permission checks, did you have permission setup in there?",
@@ -16,15 +17,15 @@
   "supertool-is-disabled": "&cSupertool is disabled. Cannot break any shops.",
   "no-double-chests": "&cYou cannot create the double chest shop.",
   "not-managed-shop": "&cYou are not the owner or moderator of this Shop",
-  "shop-already-owned": "&cThis is already a shop.",
-  "chest-was-removed": "&cThe chest was removed.",
+  "shop-already-owned": "&cIsto já é uma loja.",
+  "chest-was-removed": "&cO baú foi removido.",
   "price-too-cheap": "&cPrice must be greater than &e${0}",
   "no-price-change": "&cThis wouldn't result in a price change!",
   "you-cant-afford-a-new-shop": "&cIt costs {0} to create a new shop.",
   "player-bought-from-your-store-tax": "&c{0} purchased {1} {2} from your shop, and you earned {3} ({4} in taxes).",
   "you-cant-afford-to-change-price": "&cIt costs {0} to change the price in your shop.",
-  "success-created-shop": "&cShop created.",
-  "success-removed-shop": "&aShop removed.",
+  "success-created-shop": "&cLoja criada.",
+  "success-removed-shop": "&cLoja removida.",
   "shops-arent-locked": "&cRemember, shops are NOT protected from theft! If you want to stop thieves, lock it with LWC, Lockette, etc!",
   "shop-creation-cancelled": "&cShop creation cancelled.",
   "shop-purchase-cancelled": "&cShop purchase cancelled.",
@@ -33,7 +34,7 @@
   "negative-amount": "&cYou can't trade negative amounts",
   "not-a-number": "&cYou can only input a number, your input was {0}.",
   "exceeded-maximum": "&cThe value exceeded the maximum value in Java.",
-  "not-a-integer": "&cYou must input a number, your input was {0}.",
+  "not-a-integer": "&cYou must input a integer, your input was {0}.",
   "player-bought-from-your-store": "&c{0} purchased {1} {2} from your shop, and you earned {3}.",
   "shop-out-of-stock": "&5Your shop at {0}, {1}, {2} has run out of {3}!",
   "shop-has-no-space": "&cThe shop only has room for {0} more {1}.",
@@ -44,7 +45,7 @@
   "fee-charged-for-price-change": "&aYou paid &c{0}&a to change the price.",
   "price-is-now": "&aThe new price of the shop is &e{0}",
   "thats-not-a-number": "&cInvalid number",
-  "forbidden-vanilla-behavior": "&cThe operation is forbidden due to it not being consistent with vanilla behavior",
+  "forbidden-vanilla-behavior": "&cThe operation is forbidden due to it not being consisten with vanilla behaviour",
   "no-price-given": "&cPlease give a valid price.",
   "average-price-nearby": "&aNearby average price: &e{0}",
   "shop-has-changed": "&cThe shop you tried to use has changed since you clicked it!",
@@ -91,7 +92,7 @@
     "enchants": "&5Enchantments",
     "stored-enchants": "&5Stored Enchantments",
     "shop-information": "&aShop Information:",
-    "owner": "&aOwner: {0}",
+    "owner": "&aProprietário: {0}",
     "item": "&aItem: &e{0}",
     "item-holochat-error": "&c[Error]",
     "preview": "&b[Item Preview]",
@@ -114,6 +115,8 @@
   "blacklisted-item": "&cYou cannot sell this item because it is on the blacklist",
   "how-much-to-trade-for": "&aEnter in chat, how much you wish to trade &e{1}x {0}&a for.",
   "command": {
+    "format": "&a/{0} {1} &e- {2}",
+    "format-disabled": "&c/{0} {1} &7- {2}",
     "toggle-unlimited": {
       "unlimited": "&aShop is now unlimited",
       "limited": "&aShop is now limited"
@@ -138,7 +141,7 @@
     "no-amount-given": "&cNo amount provided. Use &a/qs refill <amount>&c",
     "now-debuging": "&aSuccessfully enabled developer mode. Reloading QuickShop...",
     "now-nolonger-debuging": "&aSuccessfully disabled Developer mode. Reloading QuickShop...",
-    "wrong-args": "&cInvalid arguments. Use &l/qs help &cto see a list of commands.",
+    "wrong-args": "&cInvalid argument. Use &l/qs help &cto see a list of commands.",
     "description": {
       "title": "&aQuickShop help",
       "unlimited": "&eGives a shop unlimited stock.",
@@ -169,10 +172,14 @@
       "removeall": "&eRemove ALL shops of a specified player",
       "transfer": "&eTransfer someone's ALL shops to other",
       "removeworld": "&eRemove ALL shops in a specified world",
-      "currency": "&eSet or remove the currency settings of the shop"
+      "currency": "&eSet or remove the currency setting of the shop",
+      "ban": "&eBans a player from the shop",
+      "unban": "&eUnbans a player from the shop",
+      "freeze": "&eDisable or Enable shop trading",
+      "lock": "&eSwitch the shop's lock status"
     },
     "disabled": "&cThis command is disabled: &e{0}",
-    "feature-not-enabled": "The feature not enabled in config."
+    "feature-not-enabled": "This feature is not enabled in the config file."
   },
   "signs": {
     "selling": "Selling {0}",
@@ -187,7 +194,8 @@
     "status-available": "&a",
     "status-unavailable": "&c",
     "out-of-stock": "Out of Stock",
-    "out-of-space": "Out of Space"
+    "out-of-space": "Out of Space",
+    "freeze": "Trading disabled"
   },
   "controlpanel": {
     "setowner": "&aOwner: &b{0} &e[&d&lChange&e]",
@@ -212,7 +220,11 @@
     "item": "&aShop Item: {0} &e[&d&lChange&e]",
     "item-hover": "&eClick to change shop Item",
     "currency": "&aCurrency: &b{0} &e[&d&lSet&e]",
-    "currency-hover": "&eClick to set or remove the currency that this shop is using"
+    "currency-hover": "&eClick to set or remove the currency that this shop is using",
+    "lock": "&eShop lock: &b{0} &e[&d&lToggle&e]",
+    "lock-hover": "&eEnable/Disable the shop's lock protection.",
+    "freeze": "&eFreeze mode: &b{0} &e[&d&lToggle&e]",
+    "freeze-hover": "&eToggle the shop's freeze status."
   },
   "tableformat": {
     "full_line": "+---------------------------------------------------+",
@@ -254,7 +266,7 @@
       "Doctor, QuickShop has a new update {0}! You should update~",
       "Ko~ko~da~yo~ QuickShop has a new update {0} ~"
     ],
-    "remote-disable-warning": "&cThis version of QuickShop is marked disabled by remote server, meaning this version may have serious problem, get details from our Spigot plugin page: {0}. This warning will continue to appear untill you switch to a stable version, but it will not affect your server's performence.",
+    "remote-disable-warning": "&cThis version of QuickShop is marked as disabled by the remote server, which means this version may have serious problem, get details from our SpigotMC page: {0}. This warning will continue to appear until you switch to a stable version, but it will not affect your server's performance.",
     "label": {
       "unstable": "[Unstable]",
       "stable": "[Stable]",
@@ -303,8 +315,15 @@
   "currency-unset": "&aShop currency removed successfully. Using default settings now.",
   "currency-not-support": "&cThe economy plugin doesn't support the multi-economy feature.",
   "item-not-exist": "&cThe item &e{0} &cdoes not exist, please check your spelling.",
-  "backup-success": "&aBackup successfully.",
-  "console-only": "&cThis command only can be executed by Console.",
-  "console-only-danger": "&cThis is a danger command so that only can be executed by Console.",
-  "clean-warning": "&eThis command will purge &call &e shops if the shop is damaged or created in disallowed worlds or selling/buying disallowed items and &c&lIN NOT LOADED WORLD SHOPS&e, make sure you have full backup of your shops data and use &b/qs cleanghost confirm &eto continue."
+  "backup-success": "&aBackup successfull.",
+  "console-only": "&cThis command can only be executed by Console.",
+  "console-only-danger": "&cThis is a dangerous command, so that only the Console can execute it.",
+  "clean-warning": "&eThis command will purge &call &eshops if the shop is damaged, was created in not allowed worlds, is selling/buying not allowed items or &c&lEXISTS IN A UNLOADED WORLD&e. Make sure to create a full backup of your shop data first and use &b/qs cleanghost confirm &eto continue.",
+  "shop-creation-failed": "&cShop creation failed, please contact with server administrator.",
+  "shop-owner-self-trade": "&eYou trading with yourself shop, so you might won't gain any balance.",
+  "chest-title": "QuickShop Store",
+  "command-type-mismatch": "&cThis command only can executed by &b{0}.",
+  "unlimited-shop-owner-changed": "&eThis unlimited shop owner has been changed to {0}.",
+  "unlimited-shop-owner-keeped": "&eAttention: The shop owner still is unlimited shop owner, you need re-set new shop owner by yourself.",
+  "server-crash-warning": "&cServer may crash after execute /qs reload command if you replace/delete QuickShop plugin Jar file while server running."
 }

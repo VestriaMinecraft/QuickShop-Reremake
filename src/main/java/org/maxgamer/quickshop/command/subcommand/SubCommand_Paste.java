@@ -23,7 +23,7 @@ import lombok.AllArgsConstructor;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 import org.maxgamer.quickshop.QuickShop;
-import org.maxgamer.quickshop.command.CommandProcesser;
+import org.maxgamer.quickshop.command.CommandHandler;
 import org.maxgamer.quickshop.util.Util;
 import org.maxgamer.quickshop.util.paste.Paste;
 
@@ -35,22 +35,21 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 @AllArgsConstructor
-public class SubCommand_Paste implements CommandProcesser {
+public class SubCommand_Paste implements CommandHandler<CommandSender> {
 
     private final QuickShop plugin;
 
     @Override
-    public void onCommand(
-            @NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] cmdArg) {
+    public void onCommand(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] cmdArg) {
         // do actions
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             if (plugin.getServer().getPluginManager().getPlugin("ConsoleSpamFix") != null) {
                 if (cmdArg.length < 1) {
-                    sender.sendMessage("Warning: ConsoleSpamFix installed! Please disable it before reporting any errors!");
+                    sender.sendMessage("Warning: ConsoleSpamFix is installed! Please disable it before reporting any errors!");
                     return;
                 } else {
                     if (Arrays.stream(cmdArg).noneMatch(str -> str.contains("--force"))) {
-                        sender.sendMessage("Warning: ConsoleSpamFix installed! Please disable it before reporting any errors!");
+                        sender.sendMessage("Warning: ConsoleSpamFix is installed! Please disable it before reporting any errors!");
                         return;
                     }
                 }
@@ -60,9 +59,9 @@ public class SubCommand_Paste implements CommandProcesser {
                 pasteToLocalFile(sender);
                 return;
             }
-            sender.sendMessage("§aPlease wait, we're uploading the data to the pastebin...");
+            sender.sendMessage("§aPlease wait, QS is uploading the data to pastebin...");
             if (!pasteToPastebin(sender)) {
-                sender.sendMessage("The paste failed, saving the paste at local location...");
+                sender.sendMessage("The paste upload has failed! Saving the paste locally...");
                 pasteToLocalFile(sender);
             }
         });
@@ -93,12 +92,12 @@ public class SubCommand_Paste implements CommandProcesser {
                 fwriter.write(pasteText);
                 fwriter.flush();
             }
-            sender.sendMessage("Paste was saved to your server at: " + file.getAbsolutePath());
+            sender.sendMessage("The paste was saved to " + file.getAbsolutePath());
             return true;
         } catch (IOException e) {
             plugin.getSentryErrorReporter().ignoreThrow();
-            plugin.getLogger().log(Level.WARNING, "Failed to save paste to your local drive, the content will print to Console", e);
-            sender.sendMessage("Saving failed, output to console...");
+            plugin.getLogger().log(Level.WARNING, "Failed to save paste locally! The content will be send to the console", e);
+            sender.sendMessage("Paste save failed! Sending paste to the console...");
             plugin.getLogger().info(pasteText);
             return false;
         }

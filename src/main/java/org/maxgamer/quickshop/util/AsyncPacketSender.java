@@ -22,37 +22,94 @@ import org.bukkit.scheduler.BukkitTask;
 import org.maxgamer.quickshop.QuickShop;
 
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-public final class AsyncPacketSender {
+/**
+ * Async packet sender used for VirtualDisplayItem
+ *
+ * @author sandtechnology
+ */
+public class AsyncPacketSender {
 
-    private static final Queue<Runnable> asyncPacketSendQueue = new ConcurrentLinkedQueue<>();
-    private static BukkitTask asyncSendingTask;
+    private volatile static AsyncSendingTask instance = null;
+    private static boolean isUsingGlobal = false;
+    private static volatile boolean enabled = false;
 
     private AsyncPacketSender() {
     }
 
-    public static void start(QuickShop plugin) {
-        //lazy initialize
-        if (asyncSendingTask == null || asyncSendingTask.isCancelled()) {
-            asyncSendingTask = plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin, () -> {
-                Runnable nextTask = asyncPacketSendQueue.poll();
-                while (nextTask != null) {
-                    nextTask.run();
-                    nextTask = asyncPacketSendQueue.poll();
-                }
-            }, 0, 1);
+    public synchronized static void start(QuickShop plugin) {
+        isUsingGlobal = plugin.getConfig().getBoolean("use-global-virtual-item-queue");
+        if (isUsingGlobal) {
+            createAndCancelExistingTask(plugin);
+        }
+        enabled = true;
+    }
+
+    private synchronized static void createAndCancelExistingTask(QuickShop plugin) {
+        if (instance != null) {
+            instance.stop();
+        }
+        instance = new AsyncSendingTask();
+        instance.start(plugin);
+    }
+
+    public static AsyncSendingTask create() {
+        if (!enabled) {
+            throw new IllegalStateException("Please start AsyncPacketSender first!");
+        }
+        if (isUsingGlobal) {
+            return instance;
+        } else {
+            return new AsyncSendingTask();
         }
     }
 
-    public static void offer(Runnable runnable) {
-        asyncPacketSendQueue.offer(runnable);
+    public synchronized static void stop() {
+        if (isUsingGlobal) {
+            instance.stop();
+        }
     }
 
-    public static void stop() {
-        if (asyncSendingTask != null && !asyncSendingTask.isCancelled()) {
-            asyncSendingTask.cancel();
+    public static class AsyncSendingTask {
+        private final Queue<Runnable> asyncPacketSendQueue = new ArrayBlockingQueue<>(100, true);
+        private final AtomicBoolean taskDone = new AtomicBoolean(true);
+        private volatile BukkitTask asyncSendingTask;
+
+        public synchronized void start(QuickShop plugin) {
+            //lazy initialize
+            if (asyncSendingTask == null || asyncSendingTask.isCancelled()) {
+                asyncSendingTask = plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin, () -> {
+                    //Variable haven‘t initialize yet
+                    if (asyncSendingTask == null) {
+                        return;
+                    }
+                    if (!taskDone.get() || asyncSendingTask.isCancelled()) {
+                        return;
+                    }
+                    taskDone.set(false);
+                    Runnable nextTask = asyncPacketSendQueue.poll();
+                    while (nextTask != null) {
+                        nextTask.run();
+                        nextTask = asyncPacketSendQueue.poll();
+                    }
+                    taskDone.set(true);
+                }, 0, 1);
+            }
+
         }
-        asyncPacketSendQueue.clear();
+
+
+        public synchronized void stop() {
+            if (asyncSendingTask != null && !asyncSendingTask.isCancelled()) {
+                asyncSendingTask.cancel();
+            }
+            asyncPacketSendQueue.clear();
+        }
+
+        public void offer(Runnable runnable) {
+            asyncPacketSendQueue.offer(runnable);
+        }
     }
 }

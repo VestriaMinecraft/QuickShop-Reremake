@@ -83,6 +83,7 @@ public class QSEventManager implements QuickEventManager, Listener {
                         });
     }
 
+    @Override
     public void callEvent(Event event) {
         if (event.isAsynchronous()) {
             if (Thread.holdsLock(plugin.getServer().getPluginManager())) {
@@ -127,11 +128,6 @@ public class QSEventManager implements QuickEventManager, Listener {
             if (skip) {
                 continue;
             }
-
-//            if (this.ignoredListener.stream().anyMatch(listenerContainer -> listenerContainer.matches(regClass, registration.getPlugin()))) {
-//                continue;
-//            }
-
 
             try {
                 registration.callEvent(event);

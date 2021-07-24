@@ -34,6 +34,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.inventory.Inventory;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +47,11 @@ import org.maxgamer.quickshop.shop.ShopAction;
 import org.maxgamer.quickshop.util.MsgUtil;
 import org.maxgamer.quickshop.util.Util;
 
+/**
+ * BlockListener to listening events about block events
+ *
+ * @author KaiNoMood, Ghost_chu, sandtechnology
+ */
 public class BlockListener extends ProtectionListenerBase {
     private final boolean update_sign_when_inventory_moving;
 
@@ -73,16 +79,14 @@ public class BlockListener extends ProtectionListenerBase {
                 if (p.getInventory().getItemInMainHand().getType() == Material.GOLDEN_AXE) {
                     if (getPlugin().getConfig().getBoolean("shop.disable-super-tool")) {
                         e.setCancelled(true);
-                        MsgUtil.sendMessage(p, MsgUtil.getMessage("supertool-is-disabled", p));
+                        MsgUtil.sendMessage(p, "supertool-is-disabled");
                         return;
                     }
-                    MsgUtil.sendMessage(p, MsgUtil.getMessage("break-shop-use-supertool", p));
+                    MsgUtil.sendMessage(p, "break-shop-use-supertool");
                     return;
                 }
                 e.setCancelled(true);
-                MsgUtil.sendMessage(p,
-                        MsgUtil.getMessage(
-                                "no-creative-break", p, MsgUtil.getItemi18n(Material.GOLDEN_AXE.name())));
+                MsgUtil.sendMessage(p, "no-creative-break", MsgUtil.getItemi18n(Material.GOLDEN_AXE.name()));
                 return;
             }
 
@@ -93,11 +97,9 @@ public class BlockListener extends ProtectionListenerBase {
                 action.setAction(ShopAction.CANCELLED);
             }
 
-            //shop.onUnload();
-
             plugin.log("Deleting shop " + shop + " request by block break.");
             shop.delete();
-            MsgUtil.sendMessage(p, MsgUtil.getMessage("success-removed-shop", p));
+            MsgUtil.sendMessage(p, "success-removed-shop");
         } else if (Util.isWallSign(b.getType())) {
             BlockState state = PaperLib.getBlockState(b, false).getState();
             if (state instanceof Sign) {
@@ -121,18 +123,16 @@ public class BlockListener extends ProtectionListenerBase {
                 if (p.getInventory().getItemInMainHand().getType() == Material.GOLDEN_AXE) {
                     if (getPlugin().getConfig().getBoolean("shop.disable-super-tool")) {
                         e.setCancelled(true);
-                        MsgUtil.sendMessage(p, MsgUtil.getMessage("supertool-is-disabled", p));
+                        MsgUtil.sendMessage(p, "supertool-is-disabled");
                         return;
                     }
-                    MsgUtil.sendMessage(p, MsgUtil.getMessage("break-shop-use-supertool", p));
+                    MsgUtil.sendMessage(p, "break-shop-use-supertool");
                     plugin.log("Deleting shop " + shop + " request by block break (super tool).");
                     shop.delete();
                     return;
                 }
                 e.setCancelled(true);
-                MsgUtil.sendMessage(p,
-                        MsgUtil.getMessage(
-                                "no-creative-break", p, MsgUtil.getItemi18n(Material.GOLDEN_AXE.name())));
+                MsgUtil.sendMessage(p, "no-creative-break", MsgUtil.getItemi18n(Material.GOLDEN_AXE.name()));
                 return;
             }
             //Allow Shop owner break the shop sign(for sign replacement)
@@ -157,7 +157,6 @@ public class BlockListener extends ProtectionListenerBase {
         if (b == null) {
             return null;
         }
-
         return getShopPlayer(b.getLocation(), false);
     }
 
@@ -181,6 +180,25 @@ public class BlockListener extends ProtectionListenerBase {
         }
     }
 
+    /*
+     * Listens for sign update to prevent other plugin or Purpur to edit the sign
+     */
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+    public void onSignUpdate(SignChangeEvent event) {
+        Block posShopBlock = Util.getAttached(event.getBlock());
+        if (posShopBlock == null) {
+            return;
+        }
+        Shop shop = plugin.getShopManager().getShopIncludeAttached(posShopBlock.getLocation());
+        if (shop == null) {
+            return;
+        }
+        Player player = event.getPlayer();
+        if (!shop.getModerator().isModerator(player.getUniqueId())) {
+            MsgUtil.sendMessage(player, "not-managed-shop");
+            event.setCancelled(true);
+        }
+    }
 
     /*
      * Listens for chest placement, so a doublechest shop can't be created.
@@ -238,11 +256,11 @@ public class BlockListener extends ProtectionListenerBase {
         if (shop != null) {
             if (!QuickShop.getPermissionManager().hasPermission(player, "quickshop.create.double")) {
                 e.setCancelled(true);
-                MsgUtil.sendMessage(player, MsgUtil.getMessage("no-double-chests", player));
+                MsgUtil.sendMessage(player, "no-double-chests");
 
             } else if (!shop.getModerator().isModerator(player.getUniqueId())) {
                 e.setCancelled(true);
-                MsgUtil.sendMessage(player, MsgUtil.getMessage("not-managed-shop", player));
+                MsgUtil.sendMessage(player, "not-managed-shop");
             }
         }
     }

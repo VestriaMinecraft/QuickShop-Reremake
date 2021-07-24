@@ -74,7 +74,7 @@ public class LockListener extends ProtectionListenerBase {
             if (!shop.getOwner().equals(p.getUniqueId())
                     && !QuickShop.getPermissionManager().hasPermission(p, "quickshop.other.destroy")) {
                 e.setCancelled(true);
-                MsgUtil.sendMessage(p, MsgUtil.getMessage("no-permission", p));
+                MsgUtil.sendMessage(p, "no-permission");
             }
         } else if (Util.isWallSign(b.getType())) {
             if (b instanceof Sign) {
@@ -102,8 +102,32 @@ public class LockListener extends ProtectionListenerBase {
             if (!shop.getOwner().equals(p.getUniqueId())
                     && !QuickShop.getPermissionManager().hasPermission(p, "quickshop.other.destroy")) {
                 e.setCancelled(true);
-                MsgUtil.sendMessage(p, MsgUtil.getMessage("no-permission", p));
+                MsgUtil.sendMessage(p, "no-permission");
             }
+        }
+    }
+
+    /*
+     * Listens for sign placement to prevent placing sign for creating protection
+     */
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+    public void onSignPlace(BlockPlaceEvent event) {
+        Block placedBlock = event.getBlock();
+        if (!(placedBlock.getState() instanceof Sign)) {
+            return;
+        }
+        Block posShopBlock = Util.getAttached(placedBlock);
+        if (posShopBlock == null) {
+            return;
+        }
+        Shop shop = plugin.getShopManager().getShopIncludeAttached(posShopBlock.getLocation());
+        if (shop == null) {
+            return;
+        }
+        Player player = event.getPlayer();
+        if (!shop.getModerator().isOwner(player.getUniqueId())) {
+            MsgUtil.sendMessage(player, "that-is-locked");
+            event.setCancelled(true);
         }
     }
 
@@ -134,10 +158,10 @@ public class LockListener extends ProtectionListenerBase {
 
         if (!shop.getModerator().isModerator(p.getUniqueId())) {
             if (QuickShop.getPermissionManager().hasPermission(p, "quickshop.other.open")) {
-                MsgUtil.sendMessage(p, MsgUtil.getMessage("bypassing-lock", p));
+                MsgUtil.sendMessage(p, "bypassing-lock");
                 return;
             }
-            MsgUtil.sendMessage(p, MsgUtil.getMessage("that-is-locked", p));
+            MsgUtil.sendMessage(p, "that-is-locked");
             e.setCancelled(true);
         }
     }
@@ -161,11 +185,11 @@ public class LockListener extends ProtectionListenerBase {
         }
 
         if (QuickShop.getPermissionManager().hasPermission(p, "quickshop.other.open")) {
-            MsgUtil.sendMessage(p, MsgUtil.getMessage("bypassing-lock", p));
+            MsgUtil.sendMessage(p, "bypassing-lock");
             return;
         }
 
-        MsgUtil.sendMessage(p, MsgUtil.getMessage("that-is-locked", p));
+        MsgUtil.sendMessage(p, "that-is-locked");
         e.setCancelled(true);
     }
 

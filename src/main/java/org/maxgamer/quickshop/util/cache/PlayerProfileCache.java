@@ -1,5 +1,5 @@
 /*
- * This file is a part of project QuickShop, the name is CacheFlag.java
+ * This file is a part of project QuickShop, the name is PlayerProfileCache.java
  *  Copyright (C) PotatoCraft Studio and contributors
  *
  *  This program is free software: you can redistribute it and/or modify it
@@ -17,10 +17,7 @@
  *
  */
 
-package org.maxgamer.quickshop;
+package org.maxgamer.quickshop.util.cache;
 
-public enum CacheFlag {
-    PROTECTED,
-    NOT_PROTECTED,
-    MISS_CACHE
+public class PlayerProfileCache {
 }

@@ -1,5 +1,5 @@
 /*
- * This file is a part of project QuickShop, the name is MsgUtilTest.java
+ * This file is a part of project QuickShop, the name is ShopInfoStorage.java
  *  Copyright (C) PotatoCraft Studio and contributors
  *
  *  This program is free software: you can redistribute it and/or modify it
@@ -17,21 +17,24 @@
  *
  */
 
-package org.maxgamer.quickshop.util;
+package org.maxgamer.quickshop.shop;
 
-import org.junit.Assert;
-import org.junit.Test;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 
-public class MsgUtilTest {
-
-    @Test
-    public void testNullLevelEnchantment() {
-        try {
-            Integer integer = null;
-            RomanNumber.toRoman(integer);
-        } catch (Exception e) {
-            Assert.fail("Failed to test null number input");
-        }
-    }
-
+/**
+ * TODO This class used for storage the shop
+ * Exclude location
+ */
+@AllArgsConstructor
+@Data
+@Builder
+public class ShopInfoStorage {
+    String moderator;
+    double price;
+    String item;
+    int unlimited;
+    int shopType;
+    String extra;
 }

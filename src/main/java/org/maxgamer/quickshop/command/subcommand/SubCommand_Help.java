@@ -20,18 +20,17 @@
 package org.maxgamer.quickshop.command.subcommand;
 
 import lombok.AllArgsConstructor;
-import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 import org.maxgamer.quickshop.QuickShop;
 import org.maxgamer.quickshop.command.CommandContainer;
-import org.maxgamer.quickshop.command.CommandProcesser;
+import org.maxgamer.quickshop.command.CommandHandler;
 import org.maxgamer.quickshop.util.MsgUtil;
 
 import java.util.List;
 
 @AllArgsConstructor
-public class SubCommand_Help implements CommandProcesser {
+public class SubCommand_Help implements CommandHandler<CommandSender> {
 
     private final QuickShop plugin;
 
@@ -43,7 +42,7 @@ public class SubCommand_Help implements CommandProcesser {
 
 
     private void sendHelp(@NotNull CommandSender s, @NotNull String commandLabel) {
-        MsgUtil.sendMessage(s, MsgUtil.getMessage("command.description.title", s));
+        MsgUtil.sendMessage(s, "command.description.title");
         commandCheckLoop:
         for (CommandContainer container : plugin.getCommandManager().getCmds()) {
             final List<String> requirePermissions = container.getPermissions();
@@ -57,30 +56,33 @@ public class SubCommand_Help implements CommandProcesser {
                 if (container.getDescription() != null) {
                     commandDesc = container.getDescription();
                     if (commandDesc == null) {
-                        commandDesc = "Error: Subcommand " + container.getPrefix() + " # " + container.getClass().getCanonicalName() + " not register the correct help description.";
+                        commandDesc = "Error: Subcommand " + container.getPrefix() + " # " + container.getClass().getCanonicalName() + " doesn't register the correct help description.";
                     }
                 }
                 if (!container.isDisabled()) {
-                    MsgUtil.sendMessage(s,
-                            ChatColor.GREEN
-                                    + "/"
-                                    + commandLabel
-                                    + " "
-                                    + container.getPrefix()
-                                    + ChatColor.YELLOW
-                                    + " - "
-                                    + commandDesc);
-                } else if (QuickShop.getPermissionManager().hasPermission(s, "quickshop.showdisabled")) {
-                    MsgUtil.sendMessage(s,
-                            ChatColor.RED
-                                    + "/"
-                                    + commandLabel
-                                    + " "
-                                    + container.getPrefix()
-                                    + ChatColor.GRAY
-                                    + " - "
-                                    + MsgUtil.getMessage("command.disabled", s, ChatColor.GRAY + container.getDisableText(s)));
+                    MsgUtil.sendDirectMessage(s, MsgUtil.getMessage("command.format", s, commandLabel, container.getPrefix(), commandDesc));
 
+
+//                    MsgUtil.sendDirectMessage(s,
+//                            ChatColor.GREEN //TODO: Color custom ability
+//                                    + "/"
+//                                    + commandLabel
+//                                    + " "
+//                                    + container.getPrefix()
+//                                    + ChatColor.YELLOW
+//                                    + " - "
+//                                    + commandDesc);
+                } else if (QuickShop.getPermissionManager().hasPermission(s, "quickshop.showdisabled")) {
+//                    MsgUtil.sendDirectMessage(s,
+//                            ChatColor.RED
+//                                    + "/"
+//                                    + commandLabel
+//                                    + " "
+//                                    + container.getPrefix()
+//                                    + ChatColor.GRAY
+//                                    + " - "
+//                                    + MsgUtil.getMessage("command.disabled", s, ChatColor.GRAY + container.getDisableText(s)));
+                    MsgUtil.sendDirectMessage(s, MsgUtil.getMessage("command.format", s, commandLabel, container.getPrefix(), container.getDisableText(s)));
                 }
             }
         }

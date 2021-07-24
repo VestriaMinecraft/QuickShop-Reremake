@@ -1,10 +1,11 @@
 {
+  "_comment": "Bonjour traducteur! Si vous éditez ceci à partir de Github ou à partir de sources de code, vous devriez aller sur https://crowdin.com/project/quickshop-reremake",
   "file-test": "Ceci est un fichier texte de test. Nous l'utilisons pour tester si les messages sont cassé. Vous pouvez le remplir avec n'importe quel \"easter eggs\" que vous aimez ici :)",
   "translation-author": "&cYou only have room for {0} more",
   "translation-version": "Version suportée: Reremake",
   "translation-contributors": "Contributeurs : Timtower, Netherfoam, KaiNoMood, Mgazul, JackThePicken, Andre_601 et brunopaiva15, HiiRaZ",
   "translation-country": "Langue: Français (fr_FR)",
-  "language-version": "52",
+  "language-version": "59",
   "not-looking-at-shop": "&cImpossible de trouver un QuickShop. Vous devez en regarder un.",
   "no-anythings-in-your-hand": "&cVous n'avez aucun objet dans votre main.",
   "no-permission": "&cVous n'avez pas la permission de faire ceci.",
@@ -33,7 +34,7 @@
   "negative-amount": "&cVous ne pouvez pas échanger une quantité négative",
   "not-a-number": "&cVous ne pouvez saisir qu'un nombre, votre entrée était {0}.",
   "exceeded-maximum": "&cLa valeur maximal à ne pas dépasser en Java.",
-  "not-a-integer": "&cVous ne pouvez saisir qu'un nombre, votre entrée était {0}.",
+  "not-a-integer": "&cYou must input a integer, your input was {0}.",
   "player-bought-from-your-store": "&c{0} a acheté {1} {2} dans ta boutique, et tu as reçu ou payé {3} ( de taxes.",
   "shop-out-of-stock": "&5Votre boutique aux coordonnées {0}, {1}, {2}, est à court de {3}!",
   "shop-has-no-space": "&cCette boutique n'a de la place que pour {0} de plus {1}.",
@@ -114,6 +115,8 @@
   "blacklisted-item": "&cVous ne pouvez pas vendre cet objet car il se trouve sur la liste noire",
   "how-much-to-trade-for": "&aEntrez dans le chat, combien vous souhaitez échanger &e{1}x {0}&a.",
   "command": {
+    "format": "&a/{0} {1} &e- {2}",
+    "format-disabled": "&c/{0} {1} &7- {2}",
     "toggle-unlimited": {
       "unlimited": "&aCe shop est désormais illimité",
       "limited": "&aCe shop est désormais limité"
@@ -138,7 +141,7 @@
     "no-amount-given": "&cAucun montant donné. Utilisez &a/qs refill <quantité>&c",
     "now-debuging": "&aPassage réussi en mode développeur. Rechargement de QuickShop...",
     "now-nolonger-debuging": "&aPassage réussi en mode développeur. Rechargement de QuickShop...",
-    "wrong-args": "&cArguments invalides. Utilisez &l/qs help &rpour prévisualiser la liste des commandes.",
+    "wrong-args": "&cArgument invalide. Utilisez &l/qs help &cpour voir une liste de commandes.",
     "description": {
       "title": "&aAide QuickShop",
       "unlimited": "&eDonne à une boutique un stock illimité.",
@@ -169,10 +172,14 @@
       "removeall": "&eSupprimer toutes les boutiques d'un joueur spécifié",
       "transfer": "&eTransférer TOUS les shops d'un joueur vers un autre",
       "removeworld": "&eSupprime TOUTES les boutiques dans un monde spécifié",
-      "currency": "&eDéfinir ou supprimer les paramètres actuelles de la boutique"
+      "currency": "&eDéfinir ou supprimer les paramètres de devise de la boutique",
+      "ban": "&eBannit un joueur de la boutique",
+      "unban": "&eDébannir un joueur de la boutique",
+      "freeze": "&eDésactiver ou activer le trading en magasin",
+      "lock": "&eChanger l'état de verrouillage de la boutique"
     },
     "disabled": "&cCette commande est désactivée : &e{0}",
-    "feature-not-enabled": "La fonctionnalité n'est pas activée dans la configuration."
+    "feature-not-enabled": "Cette fonctionnalité n'est pas activée dans le fichier de configuration."
   },
   "signs": {
     "selling": "Vendre : {0}",
@@ -186,8 +193,9 @@
     "unlimited": "Illimité",
     "status-available": "&a",
     "status-unavailable": "&c",
-    "out-of-stock": "Out of Stock",
-    "out-of-space": "Out of Space"
+    "out-of-stock": "Rupture de stock",
+    "out-of-space": "Espace insuffisant",
+    "freeze": "Echange désactivé"
   },
   "controlpanel": {
     "setowner": "&aPropriétaire: &b{0} &e[&dChanger&e]",
@@ -212,7 +220,11 @@
     "item": "&aIllimité: {0} &e[&d&lChanger&e]",
     "item-hover": "&eCliquez pour changer l'objet de la boutique",
     "currency": "blocks away from you",
-    "currency-hover": "&eCliquez pour définir ou supprimer le mode utilisée par cette boutique"
+    "currency-hover": "&eCliquez pour définir ou supprimer le mode utilisée par cette boutique",
+    "lock": "&eVerrouillage de la boutique : &b{0} &e[&d&lActiver&e]",
+    "lock-hover": "&eActiver/Désactiver la protection de verrouillage de la boutique.",
+    "freeze": "&eVerrouillage de la boutique : &b{0} &e[&d&lActiver&e]",
+    "freeze-hover": "&eActiver/désactiver le statut de blocage de la boutique."
   },
   "tableformat": {
     "full_line": "+---------------------------------------------------+",
@@ -254,7 +266,7 @@
       "Docteur, QuickShop a une nouvelle mise à jour {0}! Vous devriez mettre à jour ~",
       "Ko~ko~da~yo~ QuickShop a une nouvelle mise à jour {0}~"
     ],
-    "remote-disable-warning": "&cCette version de QuickShop a été désignée comme désactivée par le serveur distant. Cela signifie que cette version peux contenir de sérieux problèmes et bugs. Plus de détails sur notre page SpigotMC: {0}. Cet avertissement apparaitra dans votre console jusqu'à ce que vous utilisiez une version stable de QuickShop. Ceci n'affecte pas le fonctionnement de votre serveur.",
+    "remote-disable-warning": "&cCette version de QuickShop est marquée comme désactivée par le serveur distant, ce qui signifie que cette version peut avoir de sérieux problèmes, obtenez plus en profondeur des détails sur notre page SpigotMC : {0}. Cette alerte continuera d'apparaître jusqu'à ce que vous passiez à une version stable, mais elle n'affectera pas les performances de votre serveur.",
     "label": {
       "unstable": "[Instable]",
       "stable": "[Stable]",
@@ -304,7 +316,14 @@
   "currency-not-support": "&cLe plugin d'économie ne supporte pas la fonction de multi-économie.",
   "item-not-exist": "&cL'objet &e{0} &cn'existe pas, veuillez vérifier votre orthographe.",
   "backup-success": "&aSauvegarde réussie.",
-  "console-only": "&cCette commande ne peut être exécutée que par la Console.",
-  "console-only-danger": "&cIl s'agit d'une commande dangereuse qui ne peut être exécutée que par la Console.",
-  "clean-warning": "&eCette commande purgera &ctoutes &eles boutiques si la boutique est endommagée ou créée dans des mondes non autorisés ou vendant/achetant des objets non autorisés et &c&lDANS DES BOUTIQUES DE MONDES NON CHARGÉS&e, assurez-vous d'avoir une sauvegarde complète des données de vos boutiques et utilisez la commande &b/qs cleanghost confirm &epour continuer."
+  "console-only": "&cCette commande ne peut être exécutée que par la console.",
+  "console-only-danger": "&cCette commande est dangereuse pour que seule la console puisse l'exécuter.",
+  "clean-warning": "&eCette commande va purger &appeler &eshops si la boutique est endommagée, a été créée dans des mondes non autorisés, vende/achète des objets non autorisés ou &c&lEXISTS DANS UN MONDE DÉCHARGÉ. Assurez-vous d'abord de créer une sauvegarde complète des données de votre boutique et utilisez &b/qs cleanghost confirmer &epour continuer.",
+  "shop-creation-failed": "&cLa création de la boutique a échoué, veuillez contacter l'administrateur du serveur.",
+  "shop-owner-self-trade": "&eVous négociez avec vous en magasin, vous ne pourrez donc pas gagner de solde.",
+  "chest-title": "Boutique QuickShop",
+  "command-type-mismatch": "&cThis command only can executed by &b{0}.",
+  "unlimited-shop-owner-changed": "&eThis unlimited shop owner has been changed to {0}.",
+  "unlimited-shop-owner-keeped": "&eAttention: The shop owner still is unlimited shop owner, you need re-set new shop owner by yourself.",
+  "server-crash-warning": "&cServer may crash after execute /qs reload command if you replace/delete QuickShop plugin Jar file while server running."
 }

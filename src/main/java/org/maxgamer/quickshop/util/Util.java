@@ -53,6 +53,7 @@ import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
@@ -66,13 +67,14 @@ import java.util.logging.Level;
 
 public class Util {
     private static final EnumSet<Material> blacklist = EnumSet.noneOf(Material.class);
-    private static final EnumMap<Material, Entry<Double, Double>> restrictedPrices =
-            new EnumMap<>(Material.class);
+    private static final EnumMap<Material, Entry<Double, Double>> restrictedPrices = new EnumMap<>(Material.class);
     private static final EnumMap<Material, Integer> customStackSize = new EnumMap<>(Material.class);
     private static final EnumSet<Material> shoppables = EnumSet.noneOf(Material.class);
     private static final List<BlockFace> verticalFacing = Collections.unmodifiableList(Arrays.asList(BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST));
     private static final List<String> debugLogs = new ArrayList<>();
     private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    @Getter
+    private static final Map<String, String> currency2Symbol = new HashMap<>();
     private static int bypassedCustomStackSize = -1;
     private static Yaml yaml = null;
     private static boolean devMode = false;
@@ -82,12 +84,15 @@ public class Util {
     private static List<String> worldBlacklist = new ArrayList<>(5);
     @Getter
     private static boolean disableDebugLogger = false;
+    @Getter
+    @Nullable
+    private static DyeColor dyeColor = null;
     private static boolean currencySymbolOnRight;
     private static String alternateCurrencySymbol;
     private static boolean disableVaultFormat;
     private static boolean useDecimalFormat;
-    @Getter
-    private static final Map<String, String> currency2Symbol = new HashMap<>();
+    @Nullable
+    private static Class<?> cachedNMSClass = null;
 
     /**
      * Convert strArray to String. E.g "Foo, Bar"
@@ -338,7 +343,6 @@ public class Util {
         lock.writeLock().unlock();
     }
 
-
     /**
      * Formats the given number according to how vault would like it. E.g. $50 or 5 dollars.
      *
@@ -348,6 +352,9 @@ public class Util {
      */
     @NotNull
     public static String format(double n, @Nullable Shop shop) {
+        if (shop == null) {
+            return "Error: Shop null";
+        }
         return format(n, disableVaultFormat, shop.getLocation().getWorld(), shop);
     }
 
@@ -479,7 +486,8 @@ public class Util {
             }
         }
         if (itemStack.hasItemMeta()
-                && Objects.requireNonNull(itemStack.getItemMeta()).hasDisplayName()) {
+                && Objects.requireNonNull(itemStack.getItemMeta()).hasDisplayName()
+                && !QuickShop.getInstance().getConfig().getBoolean("shop.force-use-item-original-name")) {
             return itemStack.getItemMeta().getDisplayName();
         }
         return MsgUtil.getItemi18n(itemStack.getType().name());
@@ -533,7 +541,6 @@ public class Util {
             return false;
         }
         org.bukkit.block.data.type.Chest chestBlockData = (org.bukkit.block.data.type.Chest) blockData;
-        //Util.debugLog("Chest at " + state.getLocation() + " type  is " + chestBlockData.getType().name());
         return chestBlockData.getType() != org.bukkit.block.data.type.Chest.Type.SINGLE;
         //String blockDataStr = state.getBlockData().getAsString();
         //Black magic for detect double chest
@@ -643,16 +650,10 @@ public class Util {
                 try {
                     Material mat = Material.matchMaterial(sp[0]);
                     if (mat == null) {
-                        plugin
-                                .getLogger()
-                                .warning(
-                                        "Material "
-                                                + sp[0]
-                                                + " in config.yml can't match with a valid Materials, check your config.yml!");
+                        plugin.getLogger().warning("Material " + sp[0] + " in config.yml can't match with a valid Materials, check your config.yml!");
                         continue;
                     }
-                    restrictedPrices.put(
-                            mat, new SimpleEntry<>(Double.valueOf(sp[1]), Double.valueOf(sp[2])));
+                    restrictedPrices.put(mat, new SimpleEntry<>(Double.valueOf(sp[1]), Double.valueOf(sp[2])));
                 } catch (Exception e) {
                     plugin.getLogger().warning("Invalid price restricted material: " + s);
                 }
@@ -664,7 +665,7 @@ public class Util {
                 continue;
             }
 
-            if (data[0].equalsIgnoreCase("*")) {
+            if ("*".equalsIgnoreCase(data[0])) {
                 bypassedCustomStackSize = Integer.parseInt(data[1]);
             }
             Material mat = Material.matchMaterial(data[0]);
@@ -677,7 +678,10 @@ public class Util {
         }
         worldBlacklist = plugin.getConfig().getStringList("shop.blacklist-world");
         disableDebugLogger = plugin.getConfig().getBoolean("debug.disable-debuglogger", false);
-
+        try {
+            dyeColor = DyeColor.valueOf(plugin.getConfig().getString("shop.sign-dye-color"));
+        } catch (Exception ignored) {
+        }
         currencySymbolOnRight = plugin.getConfig().getBoolean("shop.currency-symbol-on-right", false);
         alternateCurrencySymbol = plugin.getConfig().getString("shop.alternate-currency-symbol", "$");
         disableVaultFormat = plugin.getConfig().getBoolean("shop.disable-vault-format", false);
@@ -711,7 +715,6 @@ public class Util {
     }
 
     private static byte[] toByteArray(@NotNull InputStream in) throws IOException {
-
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         byte[] buffer = new byte[1024 * 4];
         int n;
@@ -762,18 +765,12 @@ public class Util {
                     if (location == null) {
                         return; // Virtual GUI
                     }
-
                     inv.setItem(i, new ItemStack(Material.AIR));
                     Util.debugLog("Found shop display item in an inventory, Removing...");
-                    MsgUtil.sendGlobalAlert(
-                            "[InventoryCheck] Found displayItem in inventory at "
-                                    + location
-                                    + ", Item is "
-                                    + itemStack.getType().name());
+                    MsgUtil.sendGlobalAlert("[InventoryCheck] Found displayItem in inventory at " + location + ", Item is " + itemStack.getType().name());
                 }
             }
-        } catch (Exception t) {
-            // Ignore
+        } catch (Exception ignored) {
         }
     }
 
@@ -817,11 +814,30 @@ public class Util {
         }
     }
 
-    public static boolean isDisplayAllowBlock(@NotNull Material mat) {
-        if (isAir(mat)) {
+    /**
+     * Get this method available or not
+     *
+     * @param className class qualifiedName
+     * @param method    the name of method
+     * @param args      the arg of method
+     * @return boolean Available
+     */
+    public static boolean isMethodAvailable(@NotNull String className, String method, Class<?>... args) {// nosemgrep
+        try {
+            Class<?> clazz = Class.forName(className);
+            try {
+                clazz.getDeclaredMethod(method, args);
+            } catch (NoSuchMethodException e) {
+                clazz.getMethod(method, args);
+            }
             return true;
+        } catch (Throwable e) {
+            return false;
         }
-        return isWallSign(mat);
+    }
+
+    public static boolean isDisplayAllowBlock(@NotNull Material mat) {
+        return mat.isTransparent();
     }
 
     public static boolean isAir(@NotNull Material mat) {
@@ -860,15 +876,23 @@ public class Util {
     }
 
     /**
+     * Returns true if the world of given location is loaded or not.
+     *
+     * @param loc The location containing world
+     * @return true if the world of given location is loaded or not.
+     */
+    public static boolean isWorldLoaded(Location loc) {
+        return (getNMSVersion().contains("1_13") && loc.getWorld() != null) || loc.isWorldLoaded();
+    }
+
+    /**
      * Returns true if the given location is loaded or not.
      *
      * @param loc The location
      * @return true if the given location is loaded or not.
      */
     public static boolean isLoaded(@NotNull Location loc) {
-        // plugin.getLogger().log(Level.WARNING, "Checking isLoaded(Location loc)");
-        if (loc.getWorld() == null) {
-            // plugin.getLogger().log(Level.WARNING, "Is not loaded. (No world)");
+        if (!isWorldLoaded(loc)) {
             return false;
         }
         // Calculate the chunks coordinates. These are 1,2,3 for each chunk, NOT
@@ -915,21 +939,6 @@ public class Util {
         BlockFace towardsLeft = getRightSide(chest.getFacing());
         BlockFace actuallyBlockFace = chest.getType() == org.bukkit.block.data.type.Chest.Type.LEFT ? towardsLeft : towardsLeft.getOppositeFace();
         return block.getRelative(actuallyBlockFace);
-
-//
-//        Chest oneSideOfChest = (Chest) state;
-//        InventoryHolder chestHolder = oneSideOfChest.getInventory().getHolder();
-//        if (chestHolder instanceof DoubleChest) {
-//            DoubleChest doubleChest = (DoubleChest) chestHolder;
-//            Chest leftC = (Chest) doubleChest.getLeftSide();
-//            Chest rightC = (Chest) doubleChest.getRightSide();
-//            if (equalsBlockStateLocation(oneSideOfChest.getLocation(), Objects.requireNonNull(rightC).getLocation())) {
-//                return leftC.getBlock();
-//            } else {
-//                return rightC.getBlock();
-//            }
-//        }
-//        return null;
     }
 
     /**
@@ -950,7 +959,7 @@ public class Util {
      * @return Returns true if the item is a tool (Has durability) or false if it doesn't.
      */
     public static boolean isTool(@NotNull Material mat) {
-        return !(mat.getMaxDurability() == 0);
+        return mat.getMaxDurability() != 0;
     }
 
     /**
@@ -1169,7 +1178,6 @@ public class Util {
         return cfg.saveToString();
     }
 
-
     /**
      * Return the Class name.
      *
@@ -1177,7 +1185,6 @@ public class Util {
      */
     @NotNull
     public static String getClassPrefix() {
-
         String className = Thread.currentThread().getStackTrace()[2].getClassName();
         try {
             Class<?> c = Class.forName(className);
@@ -1259,8 +1266,8 @@ public class Util {
         try {
             double[] tps = ((double[]) tpsField.get(serverInstance));
             return tps[0];
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
+        } catch (IllegalAccessException ignored) {
+            return 20.0;
         }
     }
 
@@ -1285,16 +1292,12 @@ public class Util {
                     .forEach((shop -> finalReport.append(shop).append("\n")));
             try (BufferedWriter outputStream = new BufferedWriter(new FileWriter(file, false))) {
                 outputStream.write(finalReport.toString());
-            } catch (IOException ignored) {
-                plugin.getLogger().log(Level.WARNING, "Backup failed", ignored);
+            } catch (IOException exception) {
+                plugin.getLogger().log(Level.WARNING, "Backup failed", exception);
             }
 
         });
     }
-
-
-    @Nullable
-    private static Class<?> cachedNMSClass = null;
 
     @NotNull
     public static Class<?> getNMSClass(@Nullable String className) {
@@ -1320,7 +1323,16 @@ public class Util {
      * @return DevEdition status
      */
     public static boolean isDevEdition() {
-        return !QuickShop.getInstance().getBuildInfo().getGitBranch().equalsIgnoreCase("release");
+        return !"release".equalsIgnoreCase(QuickShop.getInstance().getBuildInfo().getGitBranch());
+    }
+
+    /**
+     * Getting startup flags
+     *
+     * @return Java startup flags without some JVM args
+     */
+    public static List<String> getStartupFlags() {
+        return ManagementFactory.getRuntimeMXBean().getInputArguments();
     }
 
     /**
@@ -1414,11 +1426,13 @@ public class Util {
     public static void ensureThread(boolean async) {
         boolean isMainThread = Bukkit.isPrimaryThread();
         if (async) {
-            if (isMainThread)
+            if (isMainThread) {
                 throw new IllegalStateException("#[Illegal Access] This method require runs on async thread.");
+            }
         } else {
-            if (!isMainThread)
+            if (!isMainThread) {
                 throw new IllegalStateException("#[Illegal Access] This method require runs on server main thread.");
+            }
         }
     }
 

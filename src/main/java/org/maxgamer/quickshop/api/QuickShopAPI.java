@@ -33,17 +33,11 @@ public class QuickShopAPI {
     private static ShopAPI shopAPI;
     private static DisplayItemAPI displayItemAPI;
 
-    /**
-     * DO NOT CALL ME, IT JUST A INTERNAL METHOD, BUT BECAUSE CROSS-PACKAGE ACCESS, IT IS PUBLIC, SO DO NOT EXECUTE IT.
-     * Go away =w=
-     *
-     * @param qs The QuickShop plugin instance
-     */
-    public static void setupApi(@NotNull JavaPlugin qs) {
-        if (!(qs instanceof QuickShop)) {
+    public static void _internal_access_only_setupApi(@NotNull JavaPlugin quickshop) {
+        if (!(quickshop instanceof QuickShop)) {
             throw new IllegalArgumentException("You can't setup API, it should only access by QuickShop internal calling.");
         }
-        plugin = (QuickShop) qs;
+        plugin = (QuickShop) quickshop;
         shopAPI = new ShopAPI(plugin);
         displayItemAPI = new DisplayItemAPI(plugin);
     }
@@ -53,7 +47,7 @@ public class QuickShopAPI {
      *
      * @return The Shop API
      */
-    public static @NotNull ShopAPI getShopAPI() {
+    public static @Nullable ShopAPI getShopAPI() {
         return shopAPI;
     }
 
@@ -62,7 +56,7 @@ public class QuickShopAPI {
      *
      * @return The DisplayItem API
      */
-    public static @NotNull DisplayItemAPI getDisplayItemAPI() {
+    public static @Nullable DisplayItemAPI getDisplayItemAPI() {
         return displayItemAPI;
     }
 

@@ -25,6 +25,8 @@ import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.maxgamer.quickshop.QuickShop;
 import org.maxgamer.quickshop.shop.Shop;
 
@@ -88,7 +90,7 @@ public class ShopAPI {
      * Gets shops in specific chunk
      *
      * @param chunk the chunk
-     * @return chunk
+     * @return The clone list of shops in this chunk
      */
     public List<Shop> getShops(Chunk chunk) {
         Map<Location, Shop> mapping = plugin.getShopManager().getShops(chunk);
@@ -99,7 +101,7 @@ public class ShopAPI {
      * Check if block is a shop and get it
      *
      * @param block The block
-     * @return Shop object if target is a shop otherwise null
+     * @return Shop object if target is a shop otherwise Optional.empty
      */
     public Optional<Shop> getShop(Block block) {
         return Optional.ofNullable(plugin.getShopManager().getShopIncludeAttached(block.getLocation()));
@@ -109,9 +111,48 @@ public class ShopAPI {
      * Check if location block is a shop and get it
      *
      * @param location The block location
-     * @return Shop object if target is a shop otherwise null
+     * @return Shop object if target is a shop otherwise Optional.empty
      */
     public Optional<Shop> getShop(Location location) {
         return Optional.ofNullable(plugin.getShopManager().getShopIncludeAttached(location));
+    }
+
+    // == Backward compatibility ==
+
+    @Deprecated
+    public @Nullable Shop getShopWithCaching(@NotNull Location location) {
+        if (plugin.getShopCache() == null) {
+            return getShop(location).orElse(null);
+        }
+        return plugin.getShopCache().getCaching(location, false);
+    }
+
+    @Deprecated
+    public @Nullable Shop getShopIncludeAttached(@NotNull Location location) {
+        return plugin.getShopManager().getShopIncludeAttached(location);
+    }
+
+    @Deprecated
+    public @Nullable Shop getShopIncludeAttachedWithCaching(@NotNull Location location) {
+        if (plugin.getShopCache() == null) {
+            return getShopIncludeAttached(location);
+        }
+        return plugin.getShopCache().getCaching(location, true);
+    }
+
+    @Deprecated
+    public @NotNull List<Shop> getPlayerAllShops(@NotNull UUID uuid) {
+        return new ArrayList<>(plugin.getShopManager().getPlayerAllShops(uuid));
+    }
+
+    @Deprecated
+    public @NotNull List<Shop> getShopsInWorld(@NotNull World world) {
+        return new ArrayList<>(plugin.getShopManager().getShopsInWorld(world));
+    }
+
+
+    @Deprecated
+    public @Nullable Map<Location, Shop> getShop(@NotNull Chunk chunk) {
+        return plugin.getShopManager().getShops(chunk);
     }
 }

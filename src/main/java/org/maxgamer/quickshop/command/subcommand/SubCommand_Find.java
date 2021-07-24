@@ -26,13 +26,12 @@ import lombok.AllArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import org.bukkit.Location;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.maxgamer.quickshop.QuickShop;
-import org.maxgamer.quickshop.command.CommandProcesser;
+import org.maxgamer.quickshop.command.CommandHandler;
 import org.maxgamer.quickshop.shop.Shop;
 import org.maxgamer.quickshop.util.MsgUtil;
 import org.maxgamer.quickshop.util.Util;
@@ -42,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
-public class SubCommand_Find implements CommandProcesser {
+public class SubCommand_Find implements CommandHandler<Player> {
 
     public static final Cache<UUID, Location> LOCATION_CACHE = CacheBuilder.newBuilder()
             .expireAfterWrite(1, TimeUnit.MINUTES)
@@ -51,20 +50,13 @@ public class SubCommand_Find implements CommandProcesser {
     private final QuickShop plugin;
 
     @Override
-    public void onCommand(
-            @NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] cmdArg) {
-        if (!(sender instanceof Player)) {
-            MsgUtil.sendMessage(sender, "Only player can run this command");
-            return;
-        }
-
+    public void onCommand(@NotNull Player sender, @NotNull String commandLabel, @NotNull String[] cmdArg) {
         if (cmdArg.length == 0) {
-            MsgUtil.sendMessage(sender, MsgUtil.getMessage("command.no-type-given", sender));
+            MsgUtil.sendMessage(sender, "command.no-type-given");
             return;
         }
 
-        final Player p = (Player) sender;
-        final Location loc = p.getLocation().clone();
+        final Location loc = sender.getLocation().clone();
         final Vector playerVector = loc.toVector();
 
         //Combing command args
@@ -126,7 +118,7 @@ public class SubCommand_Find implements CommandProcesser {
         }
         //Check if no shops found
         if (aroundShops.isEmpty()) {
-            MsgUtil.sendMessage(sender, MsgUtil.getMessage("no-nearby-shop", sender, lookFor));
+            MsgUtil.sendMessage(sender, "no-nearby-shop", lookFor);
             return;
         }
 
@@ -139,9 +131,9 @@ public class SubCommand_Find implements CommandProcesser {
         if (usingOldLogic) {
             Map.Entry<Shop, Double> closest = sortedShops.get(0);
             Location lookAt = closest.getKey().getLocation().clone().add(0.5, 0.5, 0.5);
-            PaperLib.teleportAsync(p, Util.lookAt(p.getEyeLocation(), lookAt).add(0, -1.62, 0),
+            PaperLib.teleportAsync(sender, Util.lookAt(sender.getEyeLocation(), lookAt).add(0, -1.62, 0),
                     PlayerTeleportEvent.TeleportCause.UNKNOWN);
-            MsgUtil.sendMessage(p, MsgUtil.getMessage("nearby-shop-this-way", sender, closest.getValue().intValue()));
+            MsgUtil.sendMessage(sender, "nearby-shop-this-way", String.valueOf(closest.getValue().intValue()));
         } else {
             List<Component> components = new ArrayList<>();
             components.add(Component.text(MsgUtil.getMessage("nearby-shop-header", sender, lookFor)));
